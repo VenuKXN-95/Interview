@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/* ── Tailwind v4 theme mapping ───────────────────────────────
+   Maps our CSS custom properties into Tailwind's design tokens
+   so `bg-background`, `text-foreground` etc. work as utilities */
+@theme inline {
+  --color-background:        hsl(222 47% 5%);
+  --color-foreground:        hsl(213 31% 91%);
+  --color-card:              hsl(222 47% 8%);
+  --color-card-foreground:   hsl(213 31% 91%);
+  --color-primary:           hsl(252 87% 67%);
+  --color-primary-foreground:hsl(0 0% 100%);
+  --color-secondary:         hsl(222 47% 12%);
+  --color-muted:             hsl(222 47% 12%);
+  --color-muted-foreground:  hsl(215 20% 55%);
+  --color-accent:            hsl(252 87% 67%);
+  --color-destructive:       hsl(0 63% 55%);
+  --color-border:            hsl(222 30% 16%);
+  --color-input:             hsl(222 30% 12%);
+  --color-ring:              hsl(252 87% 67%);
+  --radius: 0.75rem;
+}
+
+/* ── CSS custom properties (for ShadCN components) ──────────*/
+@layer base {
+  :root {
+    --background: 222 47% 5%;
+    --foreground: 213 31% 91%;
+    --card: 222 47% 8%;
+    --card-foreground: 213 31% 91%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 252 87% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 47% 12%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 222 47% 12%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 252 87% 67%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 30% 16%;
+    --input: 222 30% 12%;
+    --ring: 252 87% 67%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  /* Use direct CSS instead of @apply — Tailwind v4 compatible */
+  * {
+    border-color: hsl(222 30% 16%);
+  }
+  body {
+    background-color: hsl(222 47% 5%);
+    color: hsl(213 31% 91%);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(222 30% 16%); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(215 20% 55%); }
+}
+
+@layer components {
+  /* Glass card */
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow effect */
+  .glow {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.15);
+  }
+
+  /* Animated gradient border */
+  .gradient-border {
+    position: relative;
+    background:
+      linear-gradient(hsl(222 47% 8%), hsl(222 47% 8%)) padding-box,
+      linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(96, 165, 250, 0.5)) border-box;
+    border: 1px solid transparent;
+  }
+
+  /* Score bar fill */
+  .score-fill {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #7c3aed, #60a5fa);
+    transition: width 1s ease-in-out;
+  }
+
+  /* Step indicator */
+  .step-active {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+  }
+
+  .step-done {
+    background: #059669;
+    box-shadow: 0 0 15px rgba(5, 150, 105, 0.3);
+  }
+}
+
+/* ── Animations ──────────────────────────────────────────────*/
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
+  50%       { box-shadow: 0 0 40px rgba(139, 92, 246, 0.5); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.animate-fade-in-up { animation: fadeInUp 0.5s ease forwards; }
+.animate-fade-in    { animation: fadeIn 0.4s ease forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-spin-slow  { animation: spin-slow 3s linear infinite; }
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Stagger delays */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
