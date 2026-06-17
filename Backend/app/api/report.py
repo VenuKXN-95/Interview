@@ -55,4 +55,9 @@ async def get_report_json(
     # Remove internal MongoDB fields
     data.pop("_id", None)
     data.pop("pdf_path", None)
+    
+    # Convert datetime object to ISO string for JSON serialization
+    if "generated_at" in data and hasattr(data["generated_at"], "isoformat"):
+        data["generated_at"] = data["generated_at"].isoformat()
+        
     return JSONResponse(content=data, media_type="application/json")
