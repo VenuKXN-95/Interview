@@ -52,7 +52,11 @@ class ReportService:
         """Return the report data as a dict (no PDF)."""
         existing = await self._report_repo.get_by_session(session_id)
         if not existing:
-            raise ReportNotFoundException(details={"session_id": session_id})
+            logger.info("Report not found for session %s, generating it on the fly", session_id)
+            await self._generate_report(session_id, None)
+            existing = await self._report_repo.get_by_session(session_id)
+            if not existing:
+                raise ReportNotFoundException(details={"session_id": session_id})
         return existing
 
     async def _generate_report(self, session_id: str, existing_doc: dict | None) -> str:
