@@ -11,4 +11,11 @@ export const reportService = {
   getPdfUrl: (sessionId: string): string => {
     return `${API_BASE_URL}/report/${sessionId}`;
   },
+
+  downloadPdf: async (sessionId: string): Promise<Blob> => {
+    const { data } = await api.get(`/report/${sessionId}`, {
+      responseType: "blob",
+    });
+    return data;
+  },
 };

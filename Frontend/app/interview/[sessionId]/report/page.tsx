@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Navbar } from "@/components/layout/Navbar";
 import { reportService } from "@/services/reportService";
 import { Recommendation, ScoreBreakdown } from "@/types";
@@ -62,8 +64,28 @@ export default function ReportPage() {
     retry: 1,
   });
 
-  const handleDownload = () => {
-    window.open(reportService.getPdfUrl(sessionId), "_blank");
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    const toastId = toast.loading("Generating and downloading PDF report...");
+    try {
+      const blob = await reportService.downloadPdf(sessionId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `interview_report_${sessionId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("PDF downloaded successfully!", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to download PDF report", { id: toastId });
+    } finally {
+      setDownloading(false);
+    }
   };
 
   if (isLoading) {
@@ -114,10 +136,11 @@ export default function ReportPage() {
           </div>
           <button
             onClick={handleDownload}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+            disabled={downloading}
+            className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 shadow-lg transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download className="w-4 h-4" />
-            Download PDF
+            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {downloading ? "Downloading..." : "Download PDF"}
           </button>
         </div>
 
@@ -246,10 +269,11 @@ export default function ReportPage() {
         <div className="flex gap-4 flex-wrap animate-fade-in-up delay-400" style={{ opacity: 0 }}>
           <button
             onClick={handleDownload}
-            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+            disabled={downloading}
+            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 shadow-xl transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download className="w-5 h-5" />
-            Download PDF Report
+            {downloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+            {downloading ? "Downloading Report..." : "Download PDF Report"}
           </button>
           <button
             onClick={() => { router.push("/"); }}
