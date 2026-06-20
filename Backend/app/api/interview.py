@@ -33,7 +33,19 @@ async def generate_interview(
     service: Annotated[InterviewService, Depends(get_interview_service)],
     _user: CurrentUser,
 ) -> GenerateInterviewResponse:
-    return await service.generate_interview(body)
+    return await service.generate_interview(body, _user["_id"])
+
+
+@router.get(
+    "/interview/history",
+    response_model=list[SessionResponse],
+    summary="Get user's interview history",
+)
+async def get_interview_history(
+    session_svc: Annotated[SessionService, Depends(get_session_service)],
+    user: CurrentUser,
+) -> list[SessionResponse]:
+    return await session_svc.get_user_history(user["_id"])
 
 
 @router.get(

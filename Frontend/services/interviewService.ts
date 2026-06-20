@@ -25,4 +25,9 @@ export const interviewService = {
     const { data } = await api.post<SessionResponse>(`/session/${sessionId}/end`);
     return data;
   },
+
+  getHistory: async (): Promise<SessionResponse[]> => {
+    const { data } = await api.get<SessionResponse[]>("/interview/history");
+    return data;
+  },
 };

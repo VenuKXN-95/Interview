@@ -57,6 +57,10 @@ class SessionService:
         logger.info("Session completed", extra={"session_id": session_id})
         return await self.get_session(session_id)
 
+    async def get_user_history(self, user_id: str) -> list[SessionResponse]:
+        docs = await self._repo.list_by_user(user_id)
+        return [_doc_to_response(doc) for doc in docs]
+
     def _assert_transition(
         self, current: str, target: str, session_id: str
     ) -> None:

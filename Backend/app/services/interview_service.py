@@ -28,7 +28,7 @@ class InterviewService:
         self._question_svc = question_svc
 
     async def generate_interview(
-        self, request: GenerateInterviewRequest
+        self, request: GenerateInterviewRequest, user_id: str
     ) -> GenerateInterviewResponse:
         """
         Generate an interview session with mixed questions.
@@ -58,6 +58,7 @@ class InterviewService:
 
         # Persist session document
         doc = {
+            "user_id": user_id,
             "resume_id": request.resume_id,
             "jd_id": request.jd_id,
             "interview_type": request.interview_type,

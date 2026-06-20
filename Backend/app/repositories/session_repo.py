@@ -42,3 +42,9 @@ class SessionRepository(BaseRepository):
             {"resume_id": resume_id},
             sort=[("created_at", DESCENDING)],
         )
+
+    async def list_by_user(self, user_id: str) -> list[dict[str, Any]]:
+        return await self.find_many(
+            {"user_id": user_id},
+            sort=[("created_at", DESCENDING)],
+        )
