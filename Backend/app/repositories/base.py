@@ -2,6 +2,7 @@
 Generic async CRUD base repository.
 All collection-specific repos inherit from this class.
 """
+from datetime import datetime, UTC
 from typing import Any, TypeVar
 
 from bson import ObjectId
@@ -25,21 +26,36 @@ class BaseRepository:
         self._col: AsyncIOMotorCollection = db[self.collection_name]
 
     async def insert_one(self, document: dict[str, Any]) -> str:
-        """Insert a document and return its string id."""
+        """Insert a document with default audit and soft delete fields, and return its string id."""
+        if "created_at" not in document:
+            document["created_at"] = datetime.now(UTC)
+        if "updated_at" not in document:
+            document["updated_at"] = datetime.now(UTC)
+        if "is_deleted" not in document:
+            document["is_deleted"] = False
+            
         result: InsertOneResult = await self._col.insert_one(document)
         return str(result.inserted_id)
 
-    async def find_by_id(self, id_str: str) -> dict[str, Any] | None:
+    async def find_by_id(self, id_str: str, include_deleted: bool = False) -> dict[str, Any] | None:
         """Find a single document by string ObjectId."""
         oid = to_object_id(id_str)
-        doc = await self._col.find_one({"_id": oid})
+        query: dict[str, Any] = {"_id": oid}
+        if not include_deleted:
+            query["is_deleted"] = {"$ne": True}
+            
+        doc = await self._col.find_one(query)
         if doc:
             doc["_id"] = str(doc["_id"])
         return doc
 
-    async def find_one(self, query: dict[str, Any]) -> dict[str, Any] | None:
+    async def find_one(self, query: dict[str, Any], include_deleted: bool = False) -> dict[str, Any] | None:
         """Find a single document matching query."""
-        doc = await self._col.find_one(query)
+        adjusted_query = dict(query)
+        if not include_deleted:
+            adjusted_query["is_deleted"] = {"$ne": True}
+            
+        doc = await self._col.find_one(adjusted_query)
         if doc:
             doc["_id"] = str(doc["_id"])
         return doc
@@ -49,9 +65,14 @@ class BaseRepository:
         query: dict[str, Any],
         sort: list[tuple[str, int]] | None = None,
         limit: int = 0,
+        include_deleted: bool = False,
     ) -> list[dict[str, Any]]:
         """Find multiple documents."""
-        cursor = self._col.find(query)
+        adjusted_query = dict(query)
+        if not include_deleted:
+            adjusted_query["is_deleted"] = {"$ne": True}
+            
+        cursor = self._col.find(adjusted_query)
         if sort:
             cursor = cursor.sort(sort)
         if limit:
@@ -64,17 +85,38 @@ class BaseRepository:
     async def update_one(
         self, id_str: str, update: dict[str, Any]
     ) -> UpdateResult:
-        """Update a document by id."""
+        """Update a document by id, automatically updating the updated_at audit timestamp."""
         oid = to_object_id(id_str)
+        
+        # Ensure updated_at audit field is refreshed on every update
+        if "$set" not in update:
+            update["$set"] = {}
+        update["$set"]["updated_at"] = datetime.now(UTC)
+        
         return await self._col.update_one({"_id": oid}, update)
 
+    async def soft_delete(self, id_str: str) -> UpdateResult:
+        """Soft delete a document by setting is_deleted flag."""
+        return await self.update_one(
+            id_str,
+            {
+                "$set": {
+                    "is_deleted": True,
+                    "deleted_at": datetime.now(UTC)
+                }
+            }
+        )
+
     async def delete_one(self, id_str: str) -> DeleteResult:
-        """Delete a document by id."""
+        """Hard delete a document by id."""
         oid = to_object_id(id_str)
         return await self._col.delete_one({"_id": oid})
 
-    async def count(self, query: dict[str, Any] | None = None) -> int:
-        return await self._col.count_documents(query or {})
+    async def count(self, query: dict[str, Any] | None = None, include_deleted: bool = False) -> int:
+        adjusted_query = dict(query or {})
+        if not include_deleted:
+            adjusted_query["is_deleted"] = {"$ne": True}
+        return await self._col.count_documents(adjusted_query)
 
     async def aggregate(self, pipeline: list[dict]) -> list[dict[str, Any]]:
         docs = await self._col.aggregate(pipeline).to_list(length=None)
